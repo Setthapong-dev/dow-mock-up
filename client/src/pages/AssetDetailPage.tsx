@@ -8,6 +8,7 @@ export default function AssetDetailPage() {
   const [asset, setAsset] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState<any[]>([]);
+  const [locationLoadError, setLocationLoadError] = useState('');
   const [owners, setOwners] = useState<any[]>([]);
 
   const [changeType, setChangeType] = useState<'status' | 'owner' | 'location'>('status');
@@ -19,9 +20,21 @@ export default function AssetDetailPage() {
 
   useEffect(() => {
     fetchAsset();
-    api.get('/locations').then((r) => setLocations(r.data)).catch(() => {});
+    fetchLocationOptions();
     api.get('/users/owners').then((r) => setOwners(r.data)).catch(() => {});
   }, [id]);
+
+  const fetchLocationOptions = async () => {
+    setLocationLoadError('');
+    try {
+      const res = await api.get('/locations');
+      setLocations(res.data || []);
+    } catch (err: unknown) {
+      const msg = (err as any)?.response?.data?.error;
+      setLocations([]);
+      setLocationLoadError(msg || 'Failed to load location options');
+    }
+  };
 
   const fetchAsset = async () => {
     try {
@@ -260,12 +273,15 @@ export default function AssetDetailPage() {
                     ))}
                   </select>
                   <p className="text-xs text-octonary mt-1">Applied immediately (no approval needed)</p>
+                  {locationLoadError && (
+                    <p className="text-xs text-denary mt-1">{locationLoadError}</p>
+                  )}
                 </div>
               )}
 
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || (changeType === 'location' && locations.length === 0)}
                 className="w-full py-2.5 rounded-lg bg-senary text-white text-sm font-medium hover:bg-senary/90 transition-colors disabled:opacity-50"
               >
                 {submitting ? 'Submitting...' : changeType === 'location' ? 'Update Location' : 'Submit Request'}

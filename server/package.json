@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "server": "nodemon server.js",
-    "migrate": "node migrate.js"
+    "migrate": "node migrate.js",
+    "seed": "node seed.js"
   },
   "keywords": [],
   "author": "",

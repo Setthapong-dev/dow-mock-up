@@ -52,7 +52,7 @@ export default function DashboardPage() {
           activeAssets: assets.filter((a: any) => a.status === 'active').length,
           pendingApprovals: pendingRes ? pendingRes.data.length : 0,
           totalLocations: locationsRes.data.length,
-          myRequests: changes.filter((c: any) => c.status === 'pending').length,
+          myRequests: changes.length,
           approvedRequests: changes.filter((c: any) => c.status === 'done' || c.status === 'approved').length,
         });
 
@@ -80,7 +80,7 @@ export default function DashboardPage() {
       return [
         {
           label: 'Requested Assets',
-          value: stats.totalAssets,
+          value: stats.myRequests || 0,
           icon: Send,
           color: 'bg-senary/10 text-senary',
         },

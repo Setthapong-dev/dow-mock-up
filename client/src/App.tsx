@@ -51,7 +51,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/locations" element={<LocationsPage />} />
+        <Route
+          path="/locations"
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <LocationsPage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

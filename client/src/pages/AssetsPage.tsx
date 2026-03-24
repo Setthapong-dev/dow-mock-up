@@ -2,16 +2,27 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import api from '../utils/api.ts';
-import { Plus, Search, Package } from 'lucide-react';
+import { Plus, Search, Package, Send } from 'lucide-react';
 
 interface Asset {
   id: string;
   name: string;
   description: string;
   status: string;
+  owner_id: string;
   owner_name: string;
   location_name: string;
   created_at: string;
+}
+
+interface OwnerOption {
+  id: string;
+  name: string;
+}
+
+interface LocationOption {
+  id: string;
+  name: string;
 }
 
 export default function AssetsPage() {
@@ -21,12 +32,34 @@ export default function AssetsPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', location_id: '' });
-  const [locations, setLocations] = useState<any[]>([]);
+  const [locations, setLocations] = useState<LocationOption[]>([]);
+  const [owners, setOwners] = useState<OwnerOption[]>([]);
+  const [locationLoadError, setLocationLoadError] = useState('');
+  const [requestAsset, setRequestAsset] = useState<Asset | null>(null);
+  const [changeType, setChangeType] = useState<'status' | 'owner' | 'location'>('status');
+  const [newStatus, setNewStatus] = useState('');
+  const [newOwnerId, setNewOwnerId] = useState('');
+  const [newLocationId, setNewLocationId] = useState('');
+  const [requesting, setRequesting] = useState(false);
+  const [requestMessage, setRequestMessage] = useState('');
 
   useEffect(() => {
     fetchAssets();
-    api.get('/locations').then((r) => setLocations(r.data)).catch(() => {});
+    fetchLocationOptions();
+    api.get('/users/owners').then((r) => setOwners(r.data)).catch(() => {});
   }, []);
+
+  const fetchLocationOptions = async () => {
+    setLocationLoadError('');
+    try {
+      const res = await api.get('/locations');
+      setLocations(res.data || []);
+    } catch (err: unknown) {
+      const msg = (err as any)?.response?.data?.error;
+      setLocations([]);
+      setLocationLoadError(msg || 'Failed to load location options');
+    }
+  };
 
   const fetchAssets = async () => {
     try {
@@ -55,6 +88,52 @@ export default function AssetsPage() {
     }
   };
 
+  const openRequestForm = (asset: Asset) => {
+    setRequestAsset(asset);
+    setChangeType('status');
+    setNewStatus('');
+    setNewOwnerId('');
+    setNewLocationId('');
+    setRequestMessage('');
+  };
+
+  const handleRequestChange = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!requestAsset) return;
+
+    setRequesting(true);
+    setRequestMessage('');
+
+    let newValue: Record<string, string>;
+    if (changeType === 'status') {
+      newValue = { status: newStatus };
+    } else if (changeType === 'owner') {
+      newValue = { owner_id: newOwnerId };
+    } else {
+      newValue = { location_id: newLocationId };
+    }
+
+    try {
+      await api.post('/changes', {
+        asset_id: requestAsset.id,
+        change_type: changeType,
+        new_value: newValue,
+      });
+
+      setRequestMessage(
+        changeType === 'location'
+          ? 'Location updated immediately.'
+          : 'Request submitted successfully.'
+      );
+      await fetchAssets();
+    } catch (err: unknown) {
+      const msg = (err as any)?.response?.data?.error;
+      setRequestMessage(msg || 'Failed to submit request');
+    } finally {
+      setRequesting(false);
+    }
+  };
+
   const filtered = assets.filter(
     (a) =>
       a.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -79,7 +158,7 @@ export default function AssetsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-primary">Assets</h1>
+          <h1 className="text-2xl font-bold text-primary">Manage Status</h1>
           <p className="text-tertiary mt-1">{assets.length} total assets</p>
         </div>
         {(user?.role === 'admin' || user?.role === 'owner') && (
@@ -118,11 +197,16 @@ export default function AssetsPage() {
               className="px-4 py-2.5 rounded-lg border border-quaternary/50 text-sm focus:outline-none focus:border-senary"
             >
               <option value="">No location</option>
-              {locations.map((l: any) => (
+              {locations.map((l) => (
                 <option key={l.id} value={l.id}>{l.name}</option>
               ))}
             </select>
           </div>
+          {locationLoadError && (
+            <p className="mt-3 text-xs text-denary">
+              {locationLoadError}
+            </p>
+          )}
           <div className="flex gap-2 mt-4">
             <button type="submit" className="px-4 py-2 rounded-lg bg-senary text-white text-sm font-medium hover:bg-senary/90">
               Create
@@ -145,6 +229,119 @@ export default function AssetsPage() {
         />
       </div>
 
+      {requestAsset && (
+        <form onSubmit={handleRequestChange} className="bg-white rounded-xl border border-quaternary/50 p-6 mb-6">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-primary">Request Change</h3>
+              <p className="text-sm text-tertiary mt-1">
+                Asset: <span className="font-medium text-primary">{requestAsset.name}</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setRequestAsset(null)}
+              className="px-3 py-1.5 rounded-lg bg-quaternary/30 text-tertiary text-sm font-medium hover:bg-quaternary/50"
+            >
+              Close
+            </button>
+          </div>
+
+          {requestMessage && (
+            <div className="mb-4 p-3 rounded-lg bg-senary/10 text-senary text-sm">
+              {requestMessage}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-tertiary uppercase mb-2">Change Type</label>
+              <select
+                value={changeType}
+                onChange={(e) => setChangeType(e.target.value as 'status' | 'owner' | 'location')}
+                className="w-full px-4 py-2.5 rounded-lg border border-quaternary/50 text-sm focus:outline-none focus:border-senary"
+              >
+                <option value="status">Status</option>
+                <option value="owner">Owner</option>
+                <option value="location">Location</option>
+              </select>
+            </div>
+
+            {changeType === 'status' && (
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-tertiary uppercase mb-2">New Status</label>
+                <select
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value)}
+                  required
+                  className="w-full px-4 py-2.5 rounded-lg border border-quaternary/50 text-sm focus:outline-none focus:border-senary"
+                >
+                  <option value="">Select status</option>
+                  <option value="active">Active</option>
+                  <option value="notactive">Not Active</option>
+                </select>
+                <p className="text-xs text-tertiary mt-1">Status changes require owner approval.</p>
+              </div>
+            )}
+
+            {changeType === 'owner' && (
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-tertiary uppercase mb-2">New Owner</label>
+                <select
+                  value={newOwnerId}
+                  onChange={(e) => setNewOwnerId(e.target.value)}
+                  required
+                  className="w-full px-4 py-2.5 rounded-lg border border-quaternary/50 text-sm focus:outline-none focus:border-senary"
+                >
+                  <option value="">Select owner</option>
+                  {owners
+                    .filter((o) => o.id !== requestAsset.owner_id)
+                    .map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.name}
+                      </option>
+                    ))}
+                </select>
+                <p className="text-xs text-tertiary mt-1">Owner changes require approval from old and new owners.</p>
+              </div>
+            )}
+
+            {changeType === 'location' && (
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-tertiary uppercase mb-2">New Location</label>
+                <select
+                  value={newLocationId}
+                  onChange={(e) => setNewLocationId(e.target.value)}
+                  required
+                  className="w-full px-4 py-2.5 rounded-lg border border-quaternary/50 text-sm focus:outline-none focus:border-senary"
+                >
+                  <option value="">Select location</option>
+                  {locations.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-octonary mt-1">Location changes are applied immediately.</p>
+                {locationLoadError && (
+                  <p className="text-xs text-denary mt-1">{locationLoadError}</p>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-end">
+              <button
+                type="submit"
+                disabled={requesting || (changeType === 'location' && locations.length === 0)}
+                className="w-full px-4 py-2.5 rounded-lg bg-senary text-white text-sm font-medium hover:bg-senary/90 transition-colors disabled:opacity-50"
+              >
+                {requesting ? 'Submitting...' : changeType === 'location' ? 'Update Location' : 'Submit Request'}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
       {filtered.length === 0 ? (
         <div className="bg-white rounded-xl border border-quaternary/50 p-12 text-center">
           <Package size={48} className="mx-auto text-quaternary mb-4" />
@@ -160,6 +357,7 @@ export default function AssetsPage() {
                 <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Location</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Status</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Created</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-quaternary/50">
@@ -182,6 +380,16 @@ export default function AssetsPage() {
                   </td>
                   <td className="px-6 py-4 text-sm text-tertiary">
                     {new Date(asset.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      type="button"
+                      onClick={() => openRequestForm(asset)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-senary/10 text-senary text-xs font-medium hover:bg-senary/20 transition-colors"
+                    >
+                      <Send size={14} />
+                      Request
+                    </button>
                   </td>
                 </tr>
               ))}

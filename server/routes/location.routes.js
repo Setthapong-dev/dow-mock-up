@@ -1,6 +1,7 @@
 const express = require('express');
 const sql = require('../configs/db');
 const verifyToken = require('../middleware/auth');
+const requireRole = require('../middleware/role');
 
 const router = express.Router();
 
@@ -15,6 +16,8 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+router.use(requireRole('admin'));
 
 router.post('/', async (req, res) => {
   try {

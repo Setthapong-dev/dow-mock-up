@@ -37,7 +37,7 @@ export default function Sidebar() {
 
         <NavLink to="/assets" className={linkClass}>
           <Package size={18} />
-          Assets
+          Manage Status
         </NavLink>
 
         {(user?.role === 'owner' || user?.role === 'admin') && (
@@ -47,16 +47,17 @@ export default function Sidebar() {
           </NavLink>
         )}
 
-        <NavLink to="/locations" className={linkClass}>
-          <MapPin size={18} />
-          Locations
-        </NavLink>
-
         {user?.role === 'admin' && (
-          <NavLink to="/users" className={linkClass}>
-            <Users size={18} />
-            Users
-          </NavLink>
+          <>
+            <NavLink to="/locations" className={linkClass}>
+              <MapPin size={18} />
+              Locations
+            </NavLink>
+            <NavLink to="/users" className={linkClass}>
+              <Users size={18} />
+              Users
+            </NavLink>
+          </>
         )}
       </nav>
 

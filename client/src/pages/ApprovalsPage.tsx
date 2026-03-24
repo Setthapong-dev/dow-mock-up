@@ -68,7 +68,7 @@ export default function ApprovalsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-primary">Pending Approvals</h1>
+        <h1 className="text-2xl font-bold text-primary">Approval</h1>
         <p className="text-tertiary mt-1">{approvals.length} awaiting your action</p>
       </div>
 
