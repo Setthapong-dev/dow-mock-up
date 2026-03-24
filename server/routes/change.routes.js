@@ -93,13 +93,37 @@ router.get('/pending', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const rows = await sql`
-      SELECT ac.*, a.name as asset_name, u.name as requested_by_name
-      FROM asset_changes ac
-      JOIN assets a ON ac.asset_id = a.id
-      JOIN users u ON ac.requested_by = u.id
-      ORDER BY ac.created_at DESC
-    `;
+    const { role, id: userId } = req.user;
+    let rows;
+
+    if (role === 'admin') {
+      rows = await sql`
+        SELECT ac.*, a.name as asset_name, u.name as requested_by_name
+        FROM asset_changes ac
+        JOIN assets a ON ac.asset_id = a.id
+        JOIN users u ON ac.requested_by = u.id
+        ORDER BY ac.created_at DESC
+      `;
+    } else if (role === 'owner') {
+      rows = await sql`
+        SELECT ac.*, a.name as asset_name, u.name as requested_by_name
+        FROM asset_changes ac
+        JOIN assets a ON ac.asset_id = a.id
+        JOIN users u ON ac.requested_by = u.id
+        WHERE ac.requested_by = ${userId} OR a.owner_id = ${userId}
+        ORDER BY ac.created_at DESC
+      `;
+    } else {
+      rows = await sql`
+        SELECT ac.*, a.name as asset_name, u.name as requested_by_name
+        FROM asset_changes ac
+        JOIN assets a ON ac.asset_id = a.id
+        JOIN users u ON ac.requested_by = u.id
+        WHERE ac.requested_by = ${userId}
+        ORDER BY ac.created_at DESC
+      `;
+    }
+
     res.json(rows);
   } catch (err) {
     console.error('Get changes error:', err);

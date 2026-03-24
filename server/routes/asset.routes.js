@@ -8,13 +8,40 @@ router.use(verifyToken);
 
 router.get('/', async (req, res) => {
   try {
-    const rows = await sql`
-      SELECT a.*, u.name as owner_name, l.name as location_name
-      FROM assets a
-      LEFT JOIN users u ON a.owner_id = u.id
-      LEFT JOIN locations l ON a.location_id = l.id
-      ORDER BY a.created_at DESC
-    `;
+    const { role, id: userId } = req.user;
+    let rows;
+
+    if (role === 'admin') {
+      rows = await sql`
+        SELECT a.*, u.name as owner_name, l.name as location_name
+        FROM assets a
+        LEFT JOIN users u ON a.owner_id = u.id
+        LEFT JOIN locations l ON a.location_id = l.id
+        ORDER BY a.created_at DESC
+      `;
+    } else if (role === 'owner') {
+      rows = await sql`
+        SELECT DISTINCT a.*, u.name as owner_name, l.name as location_name
+        FROM assets a
+        LEFT JOIN users u ON a.owner_id = u.id
+        LEFT JOIN locations l ON a.location_id = l.id
+        LEFT JOIN asset_changes ac ON ac.asset_id = a.id
+        WHERE a.owner_id = ${userId}
+           OR ac.requested_by = ${userId}
+        ORDER BY a.created_at DESC
+      `;
+    } else {
+      rows = await sql`
+        SELECT DISTINCT a.*, u.name as owner_name, l.name as location_name
+        FROM assets a
+        LEFT JOIN users u ON a.owner_id = u.id
+        LEFT JOIN locations l ON a.location_id = l.id
+        JOIN asset_changes ac ON ac.asset_id = a.id
+        WHERE ac.requested_by = ${userId}
+        ORDER BY a.created_at DESC
+      `;
+    }
+
     res.json(rows);
   } catch (err) {
     console.error('Get assets error:', err);
