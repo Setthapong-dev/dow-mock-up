@@ -1,0 +1,134 @@
+// Asset Management System
+// Generated from schema design
+
+Project asset_management {
+  database_type: 'PostgreSQL'
+  Note: 'Asset management system with role-based access and approval workflow'
+}
+
+// ─────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────
+
+Enum user_role {
+  admin   [note: 'Can manage all users and view all assets']
+  owner   [note: 'Can manage own assets, request and approve changes']
+  user    [note: 'Can only request location changes']
+}
+
+Enum asset_status {
+  active
+  notactive
+}
+
+Enum change_type {
+  status    [note: 'Requires approval from owner']
+  owner     [note: 'Requires approval from both old and new owner']
+  location  [note: 'No approval required — applied immediately']
+}
+
+Enum change_status {
+  pending   [note: 'Waiting for approval']
+  approved  [note: 'All approvers approved']
+  rejected  [note: 'At least one approver rejected']
+  done      [note: 'Applied to asset']
+}
+
+Enum approval_status {
+  pending
+  approved
+  rejected
+}
+
+Enum approver_role {
+  owner      [note: 'Used for status change approval']
+  old_owner  [note: 'Used for owner change — current owner must approve']
+  new_owner  [note: 'Used for owner change — incoming owner must approve']
+}
+
+// ─────────────────────────────────────────
+// Tables
+// ─────────────────────────────────────────
+
+Table users {
+  id          uuid        [pk, default: `gen_random_uuid()`]
+  name        varchar(255) [not null]
+  email       varchar(255) [not null, unique]
+  role        user_role   [not null, default: 'user']
+  is_active   boolean     [not null, default: true]
+  created_at  timestamp   [not null, default: `now()`]
+  updated_at  timestamp   [not null, default: `now()`]
+
+  Note: 'System users with role-based access control'
+}
+
+Table locations {
+  id          uuid        [pk, default: `gen_random_uuid()`]
+  name        varchar(255) [not null]
+  description text
+  created_at  timestamp   [not null, default: `now()`]
+
+  Note: 'Physical or logical locations for assets'
+}
+
+Table assets {
+  id          uuid          [pk, default: `gen_random_uuid()`]
+  name        varchar(255)  [not null]
+  description text
+  owner_id    uuid          [not null, ref: > users.id]
+  location_id uuid          [ref: > locations.id]
+  status      asset_status  [not null, default: 'active']
+  created_at  timestamp     [not null, default: `now()`]
+  updated_at  timestamp     [not null, default: `now()`]
+
+  Note: 'Core asset record. Status and owner changes require approval.'
+}
+
+Table asset_changes {
+  id                uuid          [pk, default: `gen_random_uuid()`]
+  asset_id          uuid          [not null, ref: > assets.id]
+  requested_by      uuid          [not null, ref: > users.id]
+  change_type       change_type   [not null]
+  old_value         jsonb         [not null, note: 'Snapshot before change e.g. {"status":"active"} or {"owner_id":"uuid"}']
+  new_value         jsonb         [not null, note: 'Desired value after change']
+  status            change_status [not null, default: 'pending']
+  requires_approval boolean       [not null, default: true, note: 'false for location changes — applied immediately']
+  created_at        timestamp     [not null, default: `now()`]
+  updated_at        timestamp     [not null, default: `now()`]
+
+  Note: '''
+    Single table for all 3 change types.
+    - location:  requires_approval=false, status set to done immediately
+    - status:    1 approval row created (approver_role=owner)
+    - owner:     2 approval rows created (approver_role=old_owner + new_owner)
+  '''
+}
+
+Table change_approvals {
+  id            uuid            [pk, default: `gen_random_uuid()`]
+  change_id     uuid            [not null, ref: > asset_changes.id]
+  approver_id   uuid            [not null, ref: > users.id]
+  approver_role approver_role   [not null]
+  status        approval_status [not null, default: 'pending']
+  responded_at  timestamp       [note: 'Null until approver acts']
+
+  indexes {
+    (change_id, approver_id) [unique, name: 'uq_change_approver']
+  }
+
+  Note: '''
+    One row per required approver per change request.
+    Change owner creates 2 rows: old_owner + new_owner.
+    asset_changes.status = approved only when ALL rows here = approved.
+  '''
+}
+
+// ─────────────────────────────────────────
+// Relationships summary
+// ─────────────────────────────────────────
+// users        1 --- * assets          (owner)
+// locations    1 --- * assets          (location)
+// assets       1 --- * asset_changes   (change log)
+// users        1 --- * asset_changes   (requester)
+// asset_changes 1 --- * change_approvals
+// users        1 --- * change_approvals (approver)
