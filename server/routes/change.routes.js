@@ -72,18 +72,35 @@ router.post('/', async (req, res) => {
 
 router.get('/pending', async (req, res) => {
   try {
-    const userId = req.user.id;
-    const rows = await sql`
-      SELECT ca.*, ac.asset_id, ac.change_type, ac.old_value, ac.new_value,
-             a.name as asset_name, requester.name as requested_by_name,
-             ac.created_at as change_created_at
-      FROM change_approvals ca
-      JOIN asset_changes ac ON ca.change_id = ac.id
-      JOIN assets a ON ac.asset_id = a.id
-      JOIN users requester ON ac.requested_by = requester.id
-      WHERE ca.approver_id = ${userId} AND ca.status = 'pending'
-      ORDER BY ac.created_at DESC
-    `;
+    const { id: userId, role } = req.user;
+    let rows;
+
+    if (role === 'admin') {
+      rows = await sql`
+        SELECT ca.*, ac.asset_id, ac.change_type, ac.old_value, ac.new_value,
+               a.name as asset_name, requester.name as requested_by_name,
+               ac.created_at as change_created_at
+        FROM change_approvals ca
+        JOIN asset_changes ac ON ca.change_id = ac.id
+        JOIN assets a ON ac.asset_id = a.id
+        JOIN users requester ON ac.requested_by = requester.id
+        WHERE ca.status = 'pending'
+        ORDER BY ac.created_at DESC
+      `;
+    } else {
+      rows = await sql`
+        SELECT ca.*, ac.asset_id, ac.change_type, ac.old_value, ac.new_value,
+               a.name as asset_name, requester.name as requested_by_name,
+               ac.created_at as change_created_at
+        FROM change_approvals ca
+        JOIN asset_changes ac ON ca.change_id = ac.id
+        JOIN assets a ON ac.asset_id = a.id
+        JOIN users requester ON ac.requested_by = requester.id
+        WHERE ca.approver_id = ${userId} AND ca.status = 'pending'
+        ORDER BY ac.created_at DESC
+      `;
+    }
+
     res.json(rows);
   } catch (err) {
     console.error('Get pending approvals error:', err);
@@ -134,16 +151,28 @@ router.get('/', async (req, res) => {
 router.post('/:id/approve', async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const { id: userId, role } = req.user;
 
-    const approvalRows = await sql`
-      UPDATE change_approvals
-      SET status = 'approved', responded_at = now()
-      WHERE change_id = ${id} AND approver_id = ${userId} AND status = 'pending'
-      RETURNING *
-    `;
+    let approvalRows;
+
+    if (role === 'admin') {
+      approvalRows = await sql`
+        UPDATE change_approvals
+        SET status = 'approved', responded_at = now()
+        WHERE change_id = ${id} AND status = 'pending'
+        RETURNING *
+      `;
+    } else {
+      approvalRows = await sql`
+        UPDATE change_approvals
+        SET status = 'approved', responded_at = now()
+        WHERE change_id = ${id} AND approver_id = ${userId} AND status = 'pending'
+        RETURNING *
+      `;
+    }
+
     if (approvalRows.length === 0) {
-      return res.status(404).json({ error: 'No pending approval found for this user' });
+      return res.status(404).json({ error: 'No pending approval found' });
     }
 
     const pending = await sql`
@@ -181,16 +210,28 @@ router.post('/:id/approve', async (req, res) => {
 router.post('/:id/reject', async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const { id: userId, role } = req.user;
 
-    const approvalRows = await sql`
-      UPDATE change_approvals
-      SET status = 'rejected', responded_at = now()
-      WHERE change_id = ${id} AND approver_id = ${userId} AND status = 'pending'
-      RETURNING *
-    `;
+    let approvalRows;
+
+    if (role === 'admin') {
+      approvalRows = await sql`
+        UPDATE change_approvals
+        SET status = 'rejected', responded_at = now()
+        WHERE change_id = ${id} AND status = 'pending'
+        RETURNING *
+      `;
+    } else {
+      approvalRows = await sql`
+        UPDATE change_approvals
+        SET status = 'rejected', responded_at = now()
+        WHERE change_id = ${id} AND approver_id = ${userId} AND status = 'pending'
+        RETURNING *
+      `;
+    }
+
     if (approvalRows.length === 0) {
-      return res.status(404).json({ error: 'No pending approval found for this user' });
+      return res.status(404).json({ error: 'No pending approval found' });
     }
 
     await sql`UPDATE asset_changes SET status = 'rejected' WHERE id = ${id}`;

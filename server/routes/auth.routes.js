@@ -19,19 +19,15 @@ router.post('/register', async (req, res) => {
 
     const password_hash = await bcrypt.hash(password, 10);
     const rows = await sql`
-      INSERT INTO users (name, email, password_hash)
-      VALUES (${name}, ${email}, ${password_hash})
+      INSERT INTO users (name, email, password_hash, is_active)
+      VALUES (${name}, ${email}, ${password_hash}, false)
       RETURNING id, name, email, role, is_active, created_at
     `;
 
-    const user = rows[0];
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.status(201).json({ token, user });
+    res.status(201).json({
+      message: 'Registration submitted. Please wait for admin approval.',
+      user: rows[0],
+    });
   } catch (err) {
     console.error('Register error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -55,7 +51,7 @@ router.post('/login', async (req, res) => {
 
     const user = rows[0];
     if (!user.is_active) {
-      return res.status(403).json({ error: 'Account is deactivated' });
+      return res.status(403).json({ error: 'Your account is pending admin approval.' });
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);

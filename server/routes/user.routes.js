@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const sql = require('../configs/db');
 const verifyToken = require('../middleware/auth');
 const requireRole = require('../middleware/role');
@@ -16,6 +17,38 @@ router.get('/', requireRole('admin'), async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error('Get users error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/', requireRole('admin'), async (req, res) => {
+  try {
+    const { name, email, password, role: bodyRole } = req.body;
+    const role = bodyRole || 'user';
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'name, email, password are required' });
+    }
+
+    if (!['admin', 'owner', 'user'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+
+    const existing = await sql`SELECT id FROM users WHERE email = ${email}`;
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+    const rows = await sql`
+      INSERT INTO users (name, email, password_hash, role)
+      VALUES (${name}, ${email}, ${password_hash}, ${role}::user_role)
+      RETURNING id, name, email, role, is_active, created_at, updated_at
+    `;
+
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error('Create user error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

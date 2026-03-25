@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, CheckCircle } from 'lucide-react';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -10,13 +10,19 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
     try {
-      await register(name, email, password);
+      const msg = await register(name, email, password);
+      setSuccess(msg);
+      setName('');
+      setEmail('');
+      setPassword('');
     } catch (err: unknown) {
       const msg = (err as any)?.response?.data?.error;
       setError(msg || 'Registration failed');
@@ -36,65 +42,81 @@ export default function RegisterPage() {
           <p className="text-quaternary mt-2">Join the asset management system</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-secondary rounded-2xl p-8 shadow-xl border border-tertiary">
-          {error && (
-            <div className="mb-4 p-3 rounded-lg bg-denary/10 border border-denary/30 text-denary text-sm">
-              {error}
+        {success ? (
+          <div className="bg-secondary rounded-2xl p-8 shadow-xl border border-tertiary text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-octonary/20 mb-4">
+              <CheckCircle className="text-octonary" size={32} />
             </div>
-          )}
-
-          <div className="mb-5">
-            <label className="block text-sm font-medium text-quaternary mb-2">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full px-4 py-3 rounded-lg bg-primary border border-tertiary text-white placeholder-tertiary focus:outline-none focus:border-senary focus:ring-1 focus:ring-senary transition-colors"
-              placeholder="Your full name"
-            />
-          </div>
-
-          <div className="mb-5">
-            <label className="block text-sm font-medium text-quaternary mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 rounded-lg bg-primary border border-tertiary text-white placeholder-tertiary focus:outline-none focus:border-senary focus:ring-1 focus:ring-senary transition-colors"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-quaternary mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full px-4 py-3 rounded-lg bg-primary border border-tertiary text-white placeholder-tertiary focus:outline-none focus:border-senary focus:ring-1 focus:ring-senary transition-colors"
-              placeholder="At least 6 characters"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-lg bg-octonary text-white font-medium hover:bg-octonary/90 transition-colors disabled:opacity-50"
-          >
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
-
-          <p className="text-center text-quaternary text-sm mt-6">
-            Already have an account?{' '}
-            <Link to="/login" className="text-senary hover:underline">
-              Sign In
+            <h2 className="text-xl font-bold text-white mb-2">Request Submitted</h2>
+            <p className="text-quaternary mb-6">{success}</p>
+            <Link
+              to="/login"
+              className="inline-block px-6 py-3 rounded-lg bg-senary text-white font-medium hover:bg-senary/90 transition-colors"
+            >
+              Go to Login
             </Link>
-          </p>
-        </form>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="bg-secondary rounded-2xl p-8 shadow-xl border border-tertiary">
+            {error && (
+              <div className="mb-4 p-3 rounded-lg bg-denary/10 border border-denary/30 text-denary text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-quaternary mb-2">Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full px-4 py-3 rounded-lg bg-primary border border-tertiary text-white placeholder-tertiary focus:outline-none focus:border-senary focus:ring-1 focus:ring-senary transition-colors"
+                placeholder="Your full name"
+              />
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-quaternary mb-2">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 rounded-lg bg-primary border border-tertiary text-white placeholder-tertiary focus:outline-none focus:border-senary focus:ring-1 focus:ring-senary transition-colors"
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-quaternary mb-2">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full px-4 py-3 rounded-lg bg-primary border border-tertiary text-white placeholder-tertiary focus:outline-none focus:border-senary focus:ring-1 focus:ring-senary transition-colors"
+                placeholder="At least 6 characters"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-lg bg-octonary text-white font-medium hover:bg-octonary/90 transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Submitting...' : 'Request Account'}
+            </button>
+
+            <p className="text-center text-quaternary text-sm mt-6">
+              Already have an account?{' '}
+              <Link to="/login" className="text-senary hover:underline">
+                Sign In
+              </Link>
+            </p>
+          </form>
+        )}
       </div>
     </div>
   );

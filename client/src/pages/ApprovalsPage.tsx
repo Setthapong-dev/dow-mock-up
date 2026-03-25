@@ -57,6 +57,24 @@ export default function ApprovalsPage() {
     return map[type] || type;
   };
 
+  const formatChangeValue = (type: string, value: any) => {
+    if (!value || typeof value !== 'object') return '-';
+
+    if (type === 'status') {
+      return value.status || '-';
+    }
+
+    if (type === 'owner') {
+      return value.owner_name || value.owner_id || '-';
+    }
+
+    if (type === 'location') {
+      return value.location_name || value.location_id || '-';
+    }
+
+    return JSON.stringify(value);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -108,11 +126,15 @@ export default function ApprovalsPage() {
                   <div className="flex gap-6 mt-3 text-sm">
                     <div>
                       <span className="text-tertiary">From: </span>
-                      <code className="bg-quinary px-2 py-0.5 rounded text-xs">{JSON.stringify(approval.old_value)}</code>
+                      <code className="bg-quinary px-2 py-0.5 rounded text-xs">
+                        {formatChangeValue(approval.change_type, approval.old_value)}
+                      </code>
                     </div>
                     <div>
                       <span className="text-tertiary">To: </span>
-                      <code className="bg-quinary px-2 py-0.5 rounded text-xs">{JSON.stringify(approval.new_value)}</code>
+                      <code className="bg-quinary px-2 py-0.5 rounded text-xs">
+                        {formatChangeValue(approval.change_type, approval.new_value)}
+                      </code>
                     </div>
                   </div>
                 </div>
