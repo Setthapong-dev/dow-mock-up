@@ -15,7 +15,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const url = String(error.config?.url ?? '');
+    // อย่า redirect ตอน login/register ล้มเหลว (401 = รหัสผิด) — จะได้ไม่รีเฟรชหน้าและเคลียร์ error message
+    const isAuthPublicEndpoint =
+      url.includes('/auth/login') || url.includes('/auth/register');
+
+    if (status === 401 && !isAuthPublicEndpoint) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
