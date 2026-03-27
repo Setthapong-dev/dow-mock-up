@@ -19,6 +19,10 @@ app.use('/api/assets', assetRoutes);
 app.use('/api/changes', changeRoutes);
 app.use('/api/locations', locationRoutes);
 
+app.get('/', (req, res) => {
+  res.json({ message: 'API is running' });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
