@@ -261,7 +261,48 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-quaternary/50 overflow-hidden">
+      {/* Mobile card layout */}
+      <div className="space-y-3 md:hidden">
+        {activeUsers.map((u) => (
+          <div key={u.id} className="bg-white rounded-xl border border-quaternary/50 p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-senary/10 flex items-center justify-center shrink-0">
+                <Users size={14} className="text-senary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-primary truncate">{u.name}</p>
+                <p className="text-xs text-tertiary truncate">{u.email}</p>
+              </div>
+              <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-octonary/10 text-octonary shrink-0">
+                Active
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <select
+                  value={u.role}
+                  onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border-0 cursor-pointer ${roleBadge(u.role)}`}
+                >
+                  <option value="user">user</option>
+                  <option value="owner">owner</option>
+                  <option value="admin">admin</option>
+                </select>
+                <span className="text-xs text-tertiary">{new Date(u.created_at).toLocaleDateString()}</span>
+              </div>
+              <button
+                onClick={() => handleToggleActive(u.id, u.is_active)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors bg-denary/10 text-denary hover:bg-denary/20 shrink-0"
+              >
+                Deactivate
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table layout */}
+      <div className="bg-white rounded-xl border border-quaternary/50 overflow-hidden hidden md:block">
         <table className="w-full">
           <thead>
             <tr className="border-b border-quaternary/50 bg-quinary">

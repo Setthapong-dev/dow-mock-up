@@ -156,7 +156,7 @@ export default function AssetsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-primary">Manage Status</h1>
           <p className="text-tertiary mt-1">{assets.length} total assets</p>
@@ -164,7 +164,7 @@ export default function AssetsPage() {
         {(user?.role === 'admin' || user?.role === 'owner') && (
           <button
             onClick={() => setShowCreate(!showCreate)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-senary text-white text-sm font-medium hover:bg-senary/90 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-senary text-white text-sm font-medium hover:bg-senary/90 transition-colors"
           >
             <Plus size={16} />
             New Asset
@@ -348,54 +348,99 @@ export default function AssetsPage() {
           <p className="text-tertiary">No assets found</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-quaternary/50 overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-quaternary/50 bg-quinary">
-                <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Name</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Owner</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Location</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Status</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Created</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-quaternary/50">
-              {filtered.map((asset) => (
-                <tr key={asset.id} className="hover:bg-quinary transition-colors">
-                  <td className="px-6 py-4">
+        <>
+          {/* Mobile card layout */}
+          <div className="space-y-3 md:hidden">
+            {filtered.map((asset) => (
+              <div key={asset.id} className="bg-white rounded-xl border border-quaternary/50 p-4">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="min-w-0">
                     <Link to={`/assets/${asset.id}`} className="font-medium text-primary hover:text-senary transition-colors">
                       {asset.name}
                     </Link>
                     {asset.description && (
-                      <p className="text-xs text-tertiary mt-0.5 truncate max-w-xs">{asset.description}</p>
+                      <p className="text-xs text-tertiary mt-0.5 truncate">{asset.description}</p>
                     )}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-tertiary">{asset.owner_name || '-'}</td>
-                  <td className="px-6 py-4 text-sm text-tertiary">{asset.location_name || '-'}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge(asset.status)}`}>
-                      {asset.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-tertiary">
-                    {new Date(asset.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      type="button"
-                      onClick={() => openRequestForm(asset)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-senary/10 text-senary text-xs font-medium hover:bg-senary/20 transition-colors"
-                    >
-                      <Send size={14} />
-                      Request
-                    </button>
-                  </td>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium shrink-0 ${statusBadge(asset.status)}`}>
+                    {asset.status}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                  <div>
+                    <p className="text-xs text-tertiary">Owner</p>
+                    <p className="text-primary truncate">{asset.owner_name || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-tertiary">Location</p>
+                    <p className="text-primary truncate">{asset.location_name || '-'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-tertiary">{new Date(asset.created_at).toLocaleDateString()}</span>
+                  <button
+                    type="button"
+                    onClick={() => openRequestForm(asset)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-senary/10 text-senary text-xs font-medium hover:bg-senary/20 transition-colors"
+                  >
+                    <Send size={14} />
+                    Request
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table layout */}
+          <div className="bg-white rounded-xl border border-quaternary/50 overflow-hidden hidden md:block">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-quaternary/50 bg-quinary">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Name</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Owner</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Location</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Status</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Created</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-tertiary uppercase">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-quaternary/50">
+                {filtered.map((asset) => (
+                  <tr key={asset.id} className="hover:bg-quinary transition-colors">
+                    <td className="px-6 py-4">
+                      <Link to={`/assets/${asset.id}`} className="font-medium text-primary hover:text-senary transition-colors">
+                        {asset.name}
+                      </Link>
+                      {asset.description && (
+                        <p className="text-xs text-tertiary mt-0.5 truncate max-w-xs">{asset.description}</p>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-tertiary">{asset.owner_name || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-tertiary">{asset.location_name || '-'}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge(asset.status)}`}>
+                        {asset.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-tertiary">
+                      {new Date(asset.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        type="button"
+                        onClick={() => openRequestForm(asset)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-senary/10 text-senary text-xs font-medium hover:bg-senary/20 transition-colors"
+                      >
+                        <Send size={14} />
+                        Request
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

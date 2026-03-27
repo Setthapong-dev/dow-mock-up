@@ -122,7 +122,7 @@ export default function AssetDetailPage() {
                 {asset.status}
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-4 mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
               <div>
                 <p className="text-xs text-tertiary">Owner</p>
                 <p className="text-sm font-medium text-primary mt-0.5">{asset.owner_name || '-'}</p>
@@ -157,7 +157,7 @@ export default function AssetDetailPage() {
               <div className="divide-y divide-quaternary/50">
                 {asset.changes.map((change: any) => (
                   <div key={change.id} className="p-4">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-primary capitalize">{change.change_type}</span>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusBadge(change.status)}`}>
@@ -171,16 +171,16 @@ export default function AssetDetailPage() {
                     <p className="text-xs text-tertiary">
                       Requested by {change.requested_by_name}
                     </p>
-                    <div className="flex gap-4 mt-2 text-xs">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:gap-4 mt-2 text-xs">
                       <span className="text-tertiary">
-                        From: <code className="bg-quinary px-1 rounded">{JSON.stringify(change.old_value)}</code>
+                        From: <code className="bg-quinary px-1 rounded break-all">{JSON.stringify(change.old_value)}</code>
                       </span>
                       <span className="text-tertiary">
-                        To: <code className="bg-quinary px-1 rounded">{JSON.stringify(change.new_value)}</code>
+                        To: <code className="bg-quinary px-1 rounded break-all">{JSON.stringify(change.new_value)}</code>
                       </span>
                     </div>
                     {change.approvals && change.approvals.length > 0 && (
-                      <div className="mt-2 flex gap-2">
+                      <div className="mt-2 flex flex-wrap gap-2">
                         {change.approvals.map((a: any) => (
                           <span
                             key={a.id}

@@ -203,14 +203,14 @@ export default function DashboardPage() {
               <div className="divide-y divide-quaternary/50">
                 {pendingApprovals.map((a: any) => (
                   <div key={a.id} className="p-4">
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-start justify-between gap-2 mb-1">
                       <Link
                         to={`/assets/${a.asset_id}`}
-                        className="font-medium text-primary hover:text-senary transition-colors"
+                        className="font-medium text-primary hover:text-senary transition-colors min-w-0 truncate"
                       >
                         {a.asset_name}
                       </Link>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-nonary/10 text-nonary capitalize">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-nonary/10 text-nonary capitalize shrink-0">
                         {a.change_type}
                       </span>
                     </div>
@@ -252,20 +252,20 @@ export default function DashboardPage() {
           ) : (
             <div className="divide-y divide-quaternary/50">
               {recentChanges.map((change) => (
-                <div key={change.id} className="p-4 flex items-center justify-between">
-                  <div>
+                <div key={change.id} className="p-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
                     <Link
                       to={`/assets/${change.asset_id}`}
                       className="font-medium text-primary hover:text-senary transition-colors"
                     >
                       {change.asset_name}
                     </Link>
-                    <p className="text-sm text-tertiary mt-0.5">
+                    <p className="text-sm text-tertiary mt-0.5 truncate">
                       {change.change_type} change
                       {user?.role !== 'user' && <> by {change.requested_by_name}</>}
                     </p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusBadge(change.status)}`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 self-start sm:self-auto ${statusBadge(change.status)}`}>
                     {change.status}
                   </span>
                 </div>

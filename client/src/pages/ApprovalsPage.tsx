@@ -98,10 +98,10 @@ export default function ApprovalsPage() {
       ) : (
         <div className="space-y-4">
           {approvals.map((approval) => (
-            <div key={approval.id} className="bg-white rounded-xl border border-quaternary/50 p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+            <div key={approval.id} className="bg-white rounded-xl border border-quaternary/50 p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-nonary/10 text-nonary">
                       {changeTypeLabel(approval.change_type)}
                     </span>
@@ -123,7 +123,7 @@ export default function ApprovalsPage() {
                     {new Date(approval.change_created_at).toLocaleString()}
                   </p>
 
-                  <div className="flex gap-6 mt-3 text-sm">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:gap-6 mt-3 text-sm">
                     <div>
                       <span className="text-tertiary">From: </span>
                       <code className="bg-quinary px-2 py-0.5 rounded text-xs">
@@ -139,11 +139,11 @@ export default function ApprovalsPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-2 ml-4">
+                <div className="flex gap-2 shrink-0">
                   <button
                     onClick={() => handleAction(approval.change_id, 'approve')}
                     disabled={actionLoading === approval.change_id}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-octonary text-white text-sm font-medium hover:bg-octonary/90 transition-colors disabled:opacity-50"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-octonary text-white text-sm font-medium hover:bg-octonary/90 transition-colors disabled:opacity-50"
                   >
                     <Check size={14} />
                     Approve
@@ -151,7 +151,7 @@ export default function ApprovalsPage() {
                   <button
                     onClick={() => handleAction(approval.change_id, 'reject')}
                     disabled={actionLoading === approval.change_id}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-denary text-white text-sm font-medium hover:bg-denary/90 transition-colors disabled:opacity-50"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-denary text-white text-sm font-medium hover:bg-denary/90 transition-colors disabled:opacity-50"
                   >
                     <X size={14} />
                     Reject
